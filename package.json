@@ -1,6 +1,6 @@
 {
   "name": "service-agent",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "HTTP agent that connects to services defined in SRV records'",
   "main": "index.js",
   "scripts": {
