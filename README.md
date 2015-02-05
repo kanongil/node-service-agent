@@ -1,5 +1,7 @@
 # service-agent for node.js
 
+[![Build Status](https://travis-ci.org/kanongil/node-service-agent.svg?branch=master)](https://travis-ci.org/kanongil/node-service-agent)
+
 HTTP agent that connects to services defined in DNS SRV records, enabling transparent service discovery for any HTTP-based protocol.
 
 Just add the agent to your request, and it will connect to the service.
