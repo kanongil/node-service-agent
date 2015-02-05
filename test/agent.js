@@ -198,8 +198,9 @@ describe('ServiceAgent', function () {
     it('resolves the default port for empty lookup results', function (done) {
       var request = Request.defaults({ agentClass: ServiceAgent, agentOptions: { service: '_zero._tcp.' }, pool: {} });
 
-      request('http://not.there/', function(err/*, res, body*/) {
-        expect(err).to.exist();
+      request('http://localhost:' + serverPort + '/', { json: true }, function(err, res, json) {
+        expect(err).to.not.exist();
+        expect(json.host).to.equal('localhost:' + serverPort);
         done();
       });
     });

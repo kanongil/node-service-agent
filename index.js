@@ -70,8 +70,8 @@ var ServiceAgent = function ServiceAgent(options) {
 };
 Util.inherits(ServiceAgent, HttpAgent);
 
-ServiceAgent.prototype.addRequest = function (req, options) {
-  var args = arguments, self = this;
+ServiceAgent.prototype.addRequest = function (req, optionsArg) {
+  var args = arguments, options = optionsArg, self = this;
 
   // support legacy API: addRequest(req, host, port, localAddress)
   if (typeof options === 'string') {
