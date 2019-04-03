@@ -9,12 +9,12 @@
   "author": "Gil Pedersen <git@gpost.dk>",
   "license": "BSD",
   "engines": {
-    "node": ">=4.0.0 && <11"
+    "node": ">=8.0.0"
   },
   "devDependencies": {
-    "code": "^4.0.0",
-    "lab": "^11.2.1",
-    "request": "^2.53.0"
+    "code": "^5.2.4",
+    "lab": "^18.0.2",
+    "request": "^2.88.0"
   },
   "directories": {
     "test": "test"

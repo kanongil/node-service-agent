@@ -11,10 +11,10 @@ Just add the agent to your request, and it will connect to the service.
 Using the popular `request` module:
 
 ```javascript
-var ServiceAgent = require('service-agent'),
-    Request = require('request');
+const ServiceAgent = require('service-agent');
+const Request = require('request');
 
-var request = Request.defaults({
+const request = Request.defaults({
   agentClass: ServiceAgent,
   agentOptions: { service:'_http._tcp.' },
   pool: {}
@@ -48,7 +48,7 @@ $ npm install service-agent
 
 (BSD 2-Clause License)
 
-Copyright (c) 2015-2016, Gil Pedersen &lt;gpdev@gpost.dk&gt;
+Copyright (c) 2015-2019, Gil Pedersen &lt;gpdev@gpost.dk&gt;
 All rights reserved.
 
 Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:

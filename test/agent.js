@@ -31,7 +31,7 @@ describe('ServiceAgent', () => {
 
     let origDnsResolveSrv;
 
-    before((done) => {
+    before(() => {
 
         origDnsResolveSrv = Dns.resolveSrv;
         Dns.resolveSrv = (domain, callback) => {
@@ -47,77 +47,84 @@ describe('ServiceAgent', () => {
 
             return origDnsResolveSrv.call(Dns, domain, callback);
         };
-        done();
     });
 
-    after((done) => {
+    after(() => {
 
         Dns.resolveSrv = origDnsResolveSrv;
-        done();
     });
 
     let server;
     let serverPort;
 
-    before((done) => {
+    before(async () => {
 
-        server = Http.createServer();
-        server.listen(() => {
+        return await new Promise((resolve) => {
 
-            serverPort = server.address().port;
+            server = Http.createServer();
 
-            // 'register' services
-            internals.services['_http._tcp.localhost'] = [{
-                priority: 10, weight: 5,
-                port: serverPort,
-                name: 'localhost'
-            }];
-            internals.services['_http._tcp.localhost'].syncReply = true;
+            server.listen(() => {
 
-            internals.services.blank = [{
-                priority: 10, weight: 5,
-                port: serverPort,
-                name: 'localhost'
-            }];
+                serverPort = server.address().port;
 
-            internals.services['_test._tcp.localhost'] = [{
-                priority: 10, weight: 5,
-                port: serverPort,
-                name: 'localhost'
-            }, {
-                priority: 10, weight: 5,
-                port: serverPort,
-                name: 'localhost'
-            }, {
-                priority: 50, weight: 5,
-                port: 100,
-                name: 'localhost'
-            }];
+                // 'register' services
+                internals.services['_http._tcp.localhost'] = [{
+                    priority: 10, weight: 5,
+                    port: serverPort,
+                    name: 'localhost'
+                }];
+                internals.services['_http._tcp.localhost'].syncReply = true;
 
-            done();
-        });
-        server.on('request', (req, res) => {
+                internals.services.blank = [{
+                    priority: 10, weight: 5,
+                    port: serverPort,
+                    name: 'localhost'
+                }];
 
-            res.end(JSON.stringify(req.headers));
+                internals.services['_test._tcp.localhost'] = [{
+                    priority: 10, weight: 5,
+                    port: serverPort,
+                    name: 'localhost'
+                }, {
+                    priority: 10, weight: 5,
+                    port: serverPort,
+                    name: 'localhost'
+                }, {
+                    priority: 50, weight: 5,
+                    port: 100,
+                    name: 'localhost'
+                }];
+
+                resolve();
+            });
+
+            server.on('request', (req, res) => {
+
+                res.end(JSON.stringify(req.headers));
+            });
         });
     });
 
-    after((done) => {
+    after(async () => {
 
-        server.once('close', done);
+        const promise = new Promise((resolve) => {
+
+            server.once('close', resolve);
+        });
         server.close();
+
+        await promise;
     });
 
     describe('constructor', () => {
 
-        it('should inherit from http.Agent', (done) => {
+        it('should inherit from http.Agent', () => {
 
             const agent = new ServiceAgent();
             expect(agent).to.be.an.instanceof(Http.Agent);
-            done();
         });
 
-        it('throws on invalid service option', (done) => {
+        it('throws on invalid service option', () => {
 
             const createBadService = () => {
 
@@ -125,128 +132,154 @@ describe('ServiceAgent', () => {
             };
 
             expect(createBadService).to.throw(TypeError);
-            done();
         });
 
-        it('respects http.Agent options', (done) => {
+        it('respects http.Agent options', () => {
 
             const agent = new ServiceAgent({ maxSockets: 42 });
             expect(agent.maxSockets).to.equal(42);
-            done();
         });
-
     });
 
     describe('service', () => {
 
-        it('resolves using http.get', (done) => {
+        it('resolves using http.get', async () => {
 
-            Http.get({ host: 'localhost', port: 100, agent: new ServiceAgent() }, (res) => {
+            const res = await new Promise((resolve, reject) => {
 
-                res.destroy();
-                done();
-            }).end();
+                const req = Http.get({ host: 'localhost', port: 100, agent: new ServiceAgent() }, resolve);
+                req.on('error', reject);
+                req.end();
+            });
+
+            res.destroy();
         });
 
-        it('resolves using the request module', (done) => {
+        it('resolves using the request module', async () => {
 
             const request = Request.defaults({ agentClass: ServiceAgent });
 
-            request('http://localhost/', { json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                request('http://localhost/', { json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('resolves a non-GET request', (done) => {
+        it('resolves a non-GET request', async () => {
 
             const request = Request.defaults({ agentClass: ServiceAgent });
 
-            request.post('http://localhost/', { body: {}, json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                request.post('http://localhost/', { body: {}, json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('handles custom services', (done) => {
+        it('handles custom services', async () => {
 
-            Request({ url: 'http://localhost/', agentClass: ServiceAgent, agentOptions: { service: '_test._tcp.' }, pool: {}, json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                Request({ url: 'http://localhost/', agentClass: ServiceAgent, agentOptions: { service: '_test._tcp.' }, pool: {}, json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('handles custom services with a port in url', (done) => {
+        it('handles custom services with a port in url', async () => {
 
-            Request({ url: 'http://localhost:100/', agentClass: ServiceAgent, agentOptions: { service: '_test._tcp.' }, pool: {}, json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                Request({ url: 'http://localhost:100/', agentClass: ServiceAgent, agentOptions: { service: '_test._tcp.' }, pool: {}, json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('handles custom services with with missing trailing dot', (done) => {
+        it('handles custom services with with missing trailing dot', async () => {
 
-            Request({ url: 'http://localhost:100/', agentClass: ServiceAgent, agentOptions: { service: '_test._tcp' }, pool: {}, json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                Request({ url: 'http://localhost:100/', agentClass: ServiceAgent, agentOptions: { service: '_test._tcp' }, pool: {}, json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('resolves blank service option', (done) => {
+        it('resolves blank service option', async () => {
 
             const request = Request.defaults({ agentClass: ServiceAgent, agentOptions: { service: '' }, pool: {} });
 
-            request('http://blank/', { json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                request('http://blank/', { json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('resolves the default port when SRV record port is 0', (done) => {
+        it('resolves the default port when SRV record port is 0', async () => {
 
             const request = Request.defaults({ agentClass: ServiceAgent, agentOptions: { service: '_portless._tcp.' }, pool: {} });
 
-            request('http://localhost:' + serverPort + '/', { json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                request('http://localhost:' + serverPort + '/', { json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('resolves the default port for empty lookup results', (done) => {
+        it('resolves the default port for empty lookup results', async () => {
 
             const request = Request.defaults({ agentClass: ServiceAgent, agentOptions: { service: '_zero._tcp.' }, pool: {} });
 
-            request('http://localhost:' + serverPort + '/', { json: true }, (err, res, json) => {
+            const json = await new Promise((resolve, reject) => {
 
-                expect(err).to.not.exist();
-                expect(json.host).to.equal('localhost:' + serverPort);
-                done();
+                request('http://localhost:' + serverPort + '/', { json: true }, (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
             });
+
+            expect(json.host).to.equal('localhost:' + serverPort);
         });
 
-        it('resolves the default port when lookup fails', (done) => {
+        it('resolves the default port when lookup fails', async () => {
 
             const request = Request.defaults({ agentClass: ServiceAgent });
 
-            request('http://the.holy.grail/', (err/*, res, body*/) => {
+            await expect(new Promise((resolve, reject) => {
 
-                expect(err).to.exist();
-                done();
-            });
+                request('http://the.holy.grail/', (err, res, data) => {
+
+                    return err ? reject(err) : resolve(data);
+                });
+            })).reject(/ENOTFOUND/);
         });
     });
 });
