@@ -7,13 +7,13 @@
     "test": "lab -v -L -c -t 90"
   },
   "author": "Gil Pedersen <git@gpost.dk>",
-  "license": "BSD",
+  "license": "BSD-2-Clause",
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=8.9.0"
   },
   "devDependencies": {
-    "code": "^5.2.4",
-    "lab": "^18.0.2",
+    "@hapi/code": "^5.2.4",
+    "@hapi/lab": "^18.0.2",
     "request": "^2.88.0"
   },
   "directories": {

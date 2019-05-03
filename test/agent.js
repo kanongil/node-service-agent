@@ -3,8 +3,8 @@
 const Dns = require('dns');
 const Http = require('http');
 
-const Code = require('code');
-const Lab = require('lab');
+const Code = require('@hapi/code');
+const Lab = require('@hapi/lab');
 const Request = require('request');
 
 const ServiceAgent = require('..');
