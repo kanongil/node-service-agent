@@ -9,11 +9,11 @@
   "author": "Gil Pedersen <git@gpost.dk>",
   "license": "BSD-2-Clause",
   "engines": {
-    "node": ">=8.9.0"
+    "node": ">=12.13.0"
   },
   "devDependencies": {
-    "@hapi/code": "^5.2.4",
-    "@hapi/lab": "^18.0.2",
+    "@hapi/code": "^8.0.1",
+    "@hapi/lab": "^22.0.3",
     "request": "^2.88.0"
   },
   "directories": {
