@@ -1,6 +1,6 @@
 # service-agent for node.js
 
-[![Build Status](https://travis-ci.org/kanongil/node-service-agent.svg?branch=master)](https://travis-ci.org/kanongil/node-service-agent)
+![Node.js CI](https://github.com/kanongil/node-service-agent/workflows/Node.js%20CI/badge.svg)
 
 HTTP agent that connects to services defined in DNS SRV records, enabling transparent service discovery for any HTTP-based protocol.
 
